@@ -208,7 +208,6 @@ CREATE TABLE IF NOT EXISTS %s (
 )
 
 const (
-	// language=PostgreSQL
 	createTraceIDTsTableSQL = `
 CREATE TABLE IF NOT EXISTS %s_trace_id_ts (
      TraceId TEXT,

@@ -1,11 +1,10 @@
-cassandra:
-  dsn: 127.0.0.1
-  keyspace: "otel"
-  trace_table: "otel_spans"
-  timeout: 10s
-  logs_table: "otel_logs"
-  replication:
-    class: "SimpleStrategy"
-    replication_factor: 1
-  compression:
-    algorithm: "LZ4Compressor"
+postgresexporter:
+    username: "postgres"
+    password: "postgres"
+    database: "postgres"
+    logs_table_name: "otellogs"
+    traces_table_name: "oteltraces"
+    metrics_table_name: "otelmetrics"
+    port: "5432"
+    hostname: "localhost"
+
