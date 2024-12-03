@@ -1,7 +1,7 @@
 # Unofficial Postgres Exporter for OTEL
 
-![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/destrex271/pgwatch3_rpc_server)
-![GitHub Repo stars](https://img.shields.io/github/stars/destrex271/pgwatch3_rpc_server)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/destrex271/postgresexporter)
+![GitHub Repo stars](https://img.shields.io/github/stars/destrex271/postgresexporter)
 
 *The official development for this component is being carried out in this pull request -> https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/36403*
 <hr/>
