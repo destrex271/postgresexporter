@@ -3,10 +3,13 @@ package postgresexporter
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal/traceutil"
+	"github.com/destrex271/postgresexporter/internal/traceutil"
+	_ "github.com/lib/pq"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
@@ -36,6 +39,7 @@ func newLogsExporter(logger *zap.Logger, cfg *Config) (*logsExporter, error) {
 }
 
 func (e *logsExporter) start(ctx context.Context, _ component.Host) error {
+	log.Println("Starting LOG EXPORTER")
 	return createLogsTable(ctx, e.cfg, e.client)
 }
 
@@ -47,6 +51,7 @@ func (e *logsExporter) shutdown(_ context.Context) error {
 }
 
 func (e *logsExporter) pushLogsData(ctx context.Context, ld plog.Logs) error {
+	log.Println("[INFO]: Pushing logs --> ", ld)
 	start := time.Now()
 	err := doWithTx(ctx, e.client, func(tx *sql.Tx) error {
 		statement, err := tx.PrepareContext(ctx, e.insertSQL)
@@ -111,12 +116,14 @@ func (e *logsExporter) pushLogsData(ctx context.Context, ld plog.Logs) error {
 	duration := time.Since(start)
 	e.logger.Debug("insert logs", zap.Int("records", ld.LogRecordCount()),
 		zap.String("cost", duration.String()))
+	log.Println("Pushed logs.", err)
 	return err
 }
 
 func newPostgresClient(cfg *Config) (*sql.DB, error) {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		cfg.Host, cfg.Port, cfg.Username, cfg.Password, cfg.Database)
+	log.Println("Info HERERERERER ->", psqlInfo)
 	db, err := sql.Open("postgres", psqlInfo)
 
 	if err != nil {
@@ -127,6 +134,7 @@ func newPostgresClient(cfg *Config) (*sql.DB, error) {
 
 // DB functions
 func createLogsTable(ctx context.Context, cfg *Config, db *sql.DB) error {
+	log.Println("Creating table....", cfg.LogsTableName)
 	if _, err := db.ExecContext(ctx, renderCreateLogsTableSQL(cfg)); err != nil {
 		return fmt.Errorf("exec create logs table sql: %w", err)
 	}
@@ -146,7 +154,7 @@ const (
 	createLogsTableSQL = `
 		CREATE TABLE IF NOT EXISTS %s (
 		"Timestamp" TIMESTAMP(9) NOT NULL,
-		"TimestampTime" TIMESTAMP DEFAULT "Timestamp",
+		"TimestampTime" TIMESTAMP GENERATED ALWAYS AS ("Timestamp") STORED,
 		"TraceId" TEXT,
 		"SpanId" TEXT,
 		"TraceFlags" SMALLINT,
@@ -161,21 +169,13 @@ const (
 		"ScopeVersion" TEXT,
 		"ScopeAttributes" JSONB,
 		"LogAttributes" JSONB,
-		
-		PRIMARY KEY ("ServiceName", "TimestampTime"),
-		INDEX idx_trace_id ("TraceId"),
-		INDEX idx_res_attr_key (("ResourceAttributes"->>'key')),
-		INDEX idx_res_attr_value (("ResourceAttributes"->>'value')),
-		INDEX idx_scope_attr_key (("ScopeAttributes"->>'key')),
-		INDEX idx_scope_attr_value (("ScopeAttributes"->>'value')),
-		INDEX idx_log_attr_key (("LogAttributes"->>'key')),
-		INDEX idx_log_attr_value (("LogAttributes"->>'value')),
-		INDEX idx_body ("Body")
-	);		
+
+		PRIMARY KEY ("ServiceName", "TimestampTime")
+		);
 	`
 
 	insertLogsSQLTemplate = `
-		INSERT INTO %s (
+	INSERT INTO %s (
 		"Timestamp",
 		"TraceId",
 		"SpanId",
@@ -192,21 +192,7 @@ const (
 		"ScopeAttributes",
 		"LogAttributes"
 	) VALUES (
-		?,
-		?,
-		?,
-		?,
-		?,
-		?,
-		?,
-		?,
-		?,
-		?::jsonb,
-		?,
-		?,
-		?,
-		?::jsonb,
-		?::jsonb
+		$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
 	);
 	`
 )
@@ -225,11 +211,23 @@ func doWithTx(_ context.Context, db *sql.DB, fn func(tx *sql.Tx) error) error {
 	return tx.Commit()
 }
 
-func attributesToMap(attributes pcommon.Map) map[string]string {
+func attributesToMap(attributes pcommon.Map) string {
 	m := make(map[string]string, attributes.Len())
 	attributes.Range(func(k string, v pcommon.Value) bool {
 		m[k] = v.AsString()
 		return true
 	})
-	return m
+
+	json_string, _ := json.Marshal(m)
+	return string(json_string)
+}
+
+func marshalSliceToString(data interface{}) string {
+	json_string, err := json.Marshal(data)
+
+	if err != nil {
+		panic("Unable to parse data(json/string slice) to string")
+	}
+
+	return string(json_string)
 }

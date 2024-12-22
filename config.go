@@ -9,7 +9,7 @@ type Config struct {
 	Username         string                     `mapstructure:"username"`
 	Password         string                     `mapstructure:"password"`
 	Database         string                     `mapstructure:"database"`
-	Port             string                     `mapstructure:"port"`
+	Port             int                        `mapstructure:"port"`
 	Host             string                     `mapstructure:"host"`
 	LogsTableName    string                     `mapstructure:"logs_table_name"`
 	TracesTableName  string                     `mapstructure:"traces_table_name"`
