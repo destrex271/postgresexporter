@@ -8,8 +8,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/destrex271/postgresexporter/internal/db"
 	"github.com/destrex271/postgresexporter/internal/traceutil"
-	_ "github.com/lib/pq"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
@@ -25,7 +25,9 @@ type logsExporter struct {
 }
 
 func newLogsExporter(logger *zap.Logger, cfg *Config) (*logsExporter, error) {
-	client, err := newPostgresClient(cfg)
+	dbcfg := cfg.DatabaseConfig
+
+	client, err := db.Open(db.URL(dbcfg.Host, dbcfg.Port, dbcfg.Username, dbcfg.Password, dbcfg.Database, dbcfg.SSLmode))
 	if err != nil {
 		return nil, err
 	}
@@ -118,17 +120,6 @@ func (e *logsExporter) pushLogsData(ctx context.Context, ld plog.Logs) error {
 		zap.String("cost", duration.String()))
 	log.Println("Pushed logs.", err)
 	return err
-}
-
-func newPostgresClient(cfg *Config) (*sql.DB, error) {
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		cfg.Host, cfg.Port, cfg.Username, cfg.Password, cfg.Database)
-	log.Println("Info HERERERERER ->", psqlInfo)
-	db, err := sql.Open("postgres", psqlInfo)
-	if err != nil {
-		return nil, err
-	}
-	return db, nil
 }
 
 // DB functions
