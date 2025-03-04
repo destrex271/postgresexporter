@@ -125,7 +125,6 @@ func newPostgresClient(cfg *Config) (*sql.DB, error) {
 		cfg.Host, cfg.Port, cfg.Username, cfg.Password, cfg.Database)
 	log.Println("Info HERERERERER ->", psqlInfo)
 	db, err := sql.Open("postgres", psqlInfo)
-
 	if err != nil {
 		return nil, err
 	}
@@ -224,7 +223,6 @@ func attributesToMap(attributes pcommon.Map) string {
 
 func marshalSliceToString(data interface{}) string {
 	json_string, err := json.Marshal(data)
-
 	if err != nil {
 		panic("Unable to parse data(json/string slice) to string")
 	}
