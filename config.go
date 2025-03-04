@@ -8,25 +8,38 @@ import (
 )
 
 type Config struct {
+	// Database config
 	DatabaseConfig   DatabaseConfig               `mapstructure:"database"`
 
-	LogsTableName    string                       `mapstructure:"logs_table_name"`
-	TracesTableName  string                       `mapstructure:"traces_table_name"`
+	// Metrics table name
 	MetricsTableName string                       `mapstructure:"metrics_table_name"`
+	// Logs table name
+	LogsTableName    string                       `mapstructure:"logs_table_name"`
+	// Traces table name
+	TracesTableName  string                       `mapstructure:"traces_table_name"`
 
+	// Timeout
 	TimeoutSettings  exporterhelper.TimeoutConfig `mapstructure:",squash"`
+	// Sending queue settings
 	QueueSettings    exporterhelper.QueueConfig   `mapstructure:"sending_queue"`
 }
 
 type DatabaseConfig struct {
+	// Host
 	Host     string                     `mapstructure:"host"`
+	// Port
 	Port     int                        `mapstructure:"port"`
+	// Username
 	Username string                     `mapstructure:"username"`
+	// Password
 	Password string                     `mapstructure:"password"`
+	// Database name
 	Database string                     `mapstructure:"database"`
+	// SSL mode
 	SSLmode  string                     `mapstructure:"sslmode"`
 }
 
+// Build database connection
 func (cfg *Config) buildDB() (*sql.DB, error) {
 	dbcfg := cfg.DatabaseConfig
 
