@@ -5,13 +5,21 @@ import (
 )
 
 type Config struct {
-	QueueSettings    exporterhelper.QueueConfig `mapstructure:"sending_queue"`
-	Username         string                     `mapstructure:"username"`
-	Password         string                     `mapstructure:"password"`
-	Database         string                     `mapstructure:"database"`
-	Port             int                        `mapstructure:"port"`
-	Host             string                     `mapstructure:"host"`
-	LogsTableName    string                     `mapstructure:"logs_table_name"`
-	TracesTableName  string                     `mapstructure:"traces_table_name"`
-	MetricsTableName string                     `mapstructure:"metrics_table_name"`
+	DatabaseConfig   DatabaseConfig               `mapstructure:"database"`
+
+	LogsTableName    string                       `mapstructure:"logs_table_name"`
+	TracesTableName  string                       `mapstructure:"traces_table_name"`
+	MetricsTableName string                       `mapstructure:"metrics_table_name"`
+
+	TimeoutSettings  exporterhelper.TimeoutConfig `mapstructure:",squash"`
+	QueueSettings    exporterhelper.QueueConfig   `mapstructure:"sending_queue"`
+}
+
+type DatabaseConfig struct {
+	Host     string                     `mapstructure:"host"`
+	Port     int                        `mapstructure:"port"`
+	Username string                     `mapstructure:"username"`
+	Password string                     `mapstructure:"password"`
+	Database string                     `mapstructure:"database"`
+	SSLmode  string                     `mapstructure:"sslmode"`
 }
