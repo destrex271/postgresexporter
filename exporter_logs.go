@@ -8,7 +8,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/destrex271/postgresexporter/internal/db"
 	"github.com/destrex271/postgresexporter/internal/traceutil"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -25,9 +24,7 @@ type logsExporter struct {
 }
 
 func newLogsExporter(logger *zap.Logger, cfg *Config) (*logsExporter, error) {
-	dbcfg := cfg.DatabaseConfig
-
-	client, err := db.Open(db.URL(dbcfg.Host, dbcfg.Port, dbcfg.Username, dbcfg.Password, dbcfg.Database, dbcfg.SSLmode))
+	client, err := cfg.buildDB()
 	if err != nil {
 		return nil, err
 	}

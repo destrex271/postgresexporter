@@ -1,6 +1,9 @@
 package postgresexporter
 
 import (
+	"database/sql"
+
+	"github.com/destrex271/postgresexporter/internal/db"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
 )
 
@@ -22,4 +25,15 @@ type DatabaseConfig struct {
 	Password string                     `mapstructure:"password"`
 	Database string                     `mapstructure:"database"`
 	SSLmode  string                     `mapstructure:"sslmode"`
+}
+
+func (cfg *Config) buildDB() (*sql.DB, error) {
+	dbcfg := cfg.DatabaseConfig
+
+	conn, err := db.Open(db.URL(dbcfg.Host, dbcfg.Port, dbcfg.Username, dbcfg.Password, dbcfg.Database, dbcfg.SSLmode))
+	if err != nil {
+		return nil, err
+	}
+
+	return conn, nil
 }
