@@ -13,8 +13,8 @@ import (
 func NewFactory() exporter.Factory {
 	return exporter.NewFactory(metadata.Type,
 		createDefaultConfig,
-		exporter.WithTraces(createTracesExporter, metadata.TracesStability),
 		exporter.WithLogs(createLogsExporter, metadata.LogsStability),
+		exporter.WithTraces(createTracesExporter, metadata.TracesStability),
 	)
 }
 
@@ -34,12 +34,11 @@ func createDefaultConfig() component.Config {
 func createLogsExporter(
 	ctx context.Context,
 	set exporter.Settings,
-	config component.Config) (exporter.Logs, error) {
-
+	config component.Config,
+) (exporter.Logs, error) {
 	cfg := config.(*Config)
 	log.Println("CREATING LOGS EXPORTER")
 	s, err := newLogsExporter(set.Logger, cfg)
-
 	if err != nil {
 		panic(err)
 	}
@@ -57,12 +56,11 @@ func createLogsExporter(
 func createTracesExporter(
 	ctx context.Context,
 	set exporter.Settings,
-	config component.Config) (exporter.Traces, error) {
-
+	config component.Config,
+) (exporter.Traces, error) {
 	log.Println("CREATING TRACES EXPORTER")
 	cfg := config.(*Config)
 	s, err := newTracesExporter(set.Logger, cfg)
-
 	if err != nil {
 		panic(err)
 	}
