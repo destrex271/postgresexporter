@@ -2,6 +2,7 @@ package postgresexporter
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/destrex271/postgresexporter/internal/metadata"
@@ -20,14 +21,19 @@ func NewFactory() exporter.Factory {
 
 func createDefaultConfig() component.Config {
 	return &Config{
-		Username:         "postgres",
-		Password:         "postgres",
-		Database:         "postgres",
-		Port:             5432,
-		Host:             "localhost",
+		DatabaseConfig: DatabaseConfig{
+			Host:     "localhost",
+			Port:     5432,
+			Username: "postgres",
+			Password: "postgres",
+			Database: "postgres",
+			SSLmode:  "disabled",
+		},
 		LogsTableName:    "otellogs",
 		TracesTableName:  "oteltraces",
 		MetricsTableName: "otelmetrics",
+		TimeoutSettings: exporterhelper.NewDefaultTimeoutConfig(),
+		QueueSettings: exporterhelper.NewDefaultQueueConfig(),
 	}
 }
 
