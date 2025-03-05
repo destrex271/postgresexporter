@@ -3,4 +3,4 @@ type: postgres
 status:
   class: exporter
   stability:
-    alpha: [metrics, logs, traces]
+    development: [metrics, logs, traces]
