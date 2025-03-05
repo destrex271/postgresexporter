@@ -11,10 +11,10 @@ import (
 )
 
 type metricsExporter struct {
-	client    *sql.DB
+	client *sql.DB
 
-	config    *Config
-	logger    *zap.Logger
+	config *Config
+	logger *zap.Logger
 }
 
 func newMetricsExporter(config *Config, set exporter.Settings) (*metricsExporter, error) {
@@ -34,10 +34,21 @@ func (e *metricsExporter) ConsumeMetrics(_ context.Context, metrics pmetric.Metr
 	return nil
 }
 
-func (e *metricsExporter) Start(_ context.Context, host component.Host) error {
+func (e *metricsExporter) Start(ctx context.Context, host component.Host) error {
+	if !e.config.shouldCreateSchema() {
+		return nil
+	}
+
+	if err := createSchema(ctx, e.client, e.config); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (e *metricsExporter) Shutdown(_ context.Context) error {
+	if e.client != nil {
+		e.client.Close()
+	}
 	return nil
 }
