@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/destrex271/postgresexporter/internal/db"
+	"github.com/destrex271/postgresexporter/internal/metricsutil"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
 )
 
@@ -11,12 +12,18 @@ type Config struct {
 	// Database config
 	DatabaseConfig   DatabaseConfig               `mapstructure:"database"`
 
+	// Decided to create separate tables for each metric to provide better performance.
+	// But you can define DatabaseConfig.Schema in which to create it.
 	// Metrics table name
-	MetricsTableName string                       `mapstructure:"metrics_table_name"`
+	// MetricsTableName string                       `mapstructure:"metrics_table_name"`
+
 	// Logs table name
 	LogsTableName    string                       `mapstructure:"logs_table_name"`
 	// Traces table name
 	TracesTableName  string                       `mapstructure:"traces_table_name"`
+
+	// Pre-create the database and schema if true. Default - true.
+	CreateSchema     bool `mapstructure:"create_schema"`
 
 	// Timeout
 	TimeoutSettings  exporterhelper.TimeoutConfig `mapstructure:",squash"`
@@ -25,18 +32,28 @@ type Config struct {
 }
 
 type DatabaseConfig struct {
+	// Type. Can be 'postgresql', 'timescaledb', 'paradedb' etc.
+	// The organization of data may be different for each type
+	Type     metricsutil.DBType `mapstructure:"type"`
 	// Host
-	Host     string                     `mapstructure:"host"`
+	Host     string             `mapstructure:"host"`
 	// Port
-	Port     int                        `mapstructure:"port"`
+	Port     int                `mapstructure:"port"`
 	// Username
-	Username string                     `mapstructure:"username"`
+	Username string             `mapstructure:"username"`
 	// Password
-	Password string                     `mapstructure:"password"`
-	// Database name
-	Database string                     `mapstructure:"database"`
-	// SSL mode
-	SSLmode  string                     `mapstructure:"sslmode"`
+	Password string             `mapstructure:"password"`
+	// Database name. Default - otel
+	Database string             `mapstructure:"database"`
+	// Schema name. Default - otel
+	Schema   string             `mapstructure:"schema"`
+	// SSL mode. Default - disabled
+	SSLmode  string             `mapstructure:"sslmode"`
+}
+
+// Should create schema
+func (cfg *Config) shouldCreateSchema() bool {
+	return cfg.CreateSchema
 }
 
 // Build database connection
