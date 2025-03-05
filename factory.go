@@ -6,7 +6,6 @@ import (
 	"log"
 
 	"github.com/destrex271/postgresexporter/internal/metadata"
-	"github.com/destrex271/postgresexporter/internal/metricsutil"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/exporter"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
@@ -24,7 +23,7 @@ func NewFactory() exporter.Factory {
 func createDefaultConfig() component.Config {
 	return &Config{
 		DatabaseConfig: DatabaseConfig{
-			Type:     metricsutil.DBTypePostgreSQL,
+			Type:     DBTypePostgreSQL,
 			Host:     "localhost",
 			Port:     5432,
 			Username: "postgres",
