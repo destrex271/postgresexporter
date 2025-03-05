@@ -4,13 +4,12 @@ import (
 	"database/sql"
 
 	"github.com/destrex271/postgresexporter/internal/db"
-	"github.com/destrex271/postgresexporter/internal/metricsutil"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
 )
 
 type Config struct {
 	// Database config
-	DatabaseConfig   DatabaseConfig               `mapstructure:"database"`
+	DatabaseConfig  DatabaseConfig               `mapstructure:"database"`
 
 	// Decided to create separate tables for each metric to provide better performance.
 	// But you can define DatabaseConfig.Schema in which to create it.
@@ -18,23 +17,23 @@ type Config struct {
 	// MetricsTableName string                       `mapstructure:"metrics_table_name"`
 
 	// Logs table name
-	LogsTableName    string                       `mapstructure:"logs_table_name"`
+	LogsTableName   string                       `mapstructure:"logs_table_name"`
 	// Traces table name
-	TracesTableName  string                       `mapstructure:"traces_table_name"`
+	TracesTableName string                       `mapstructure:"traces_table_name"`
 
-	// Pre-create the database and schema if true. Default - true.
-	CreateSchema     bool `mapstructure:"create_schema"`
+	// Pre-create the schema and tables if true. Default - true.
+	CreateSchema    bool                         `mapstructure:"create_schema"`
 
 	// Timeout
-	TimeoutSettings  exporterhelper.TimeoutConfig `mapstructure:",squash"`
+	TimeoutSettings exporterhelper.TimeoutConfig `mapstructure:",squash"`
 	// Sending queue settings
-	QueueSettings    exporterhelper.QueueConfig   `mapstructure:"sending_queue"`
+	QueueSettings   exporterhelper.QueueConfig   `mapstructure:"sending_queue"`
 }
 
 type DatabaseConfig struct {
 	// Type. Can be 'postgresql', 'timescaledb', 'paradedb' etc.
 	// The organization of data may be different for each type
-	Type     metricsutil.DBType `mapstructure:"type"`
+	Type     DBType `mapstructure:"type"`
 	// Host
 	Host     string             `mapstructure:"host"`
 	// Port
