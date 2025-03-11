@@ -33,7 +33,7 @@ type Config struct {
 
 type DatabaseConfig struct {
 	// Type. Can be 'postgresql', 'timescaledb', 'paradedb' etc.
-	// The organization of data may be different for each type
+	// The structure of data may be different for each type
 	Type     internal.DBType    `mapstructure:"type"`
 	// Host
 	Host     string             `mapstructure:"host"`
