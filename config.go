@@ -3,6 +3,7 @@ package postgresexporter
 import (
 	"database/sql"
 
+	"github.com/destrex271/postgresexporter/internal"
 	"github.com/destrex271/postgresexporter/internal/db"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
 )
@@ -33,7 +34,7 @@ type Config struct {
 type DatabaseConfig struct {
 	// Type. Can be 'postgresql', 'timescaledb', 'paradedb' etc.
 	// The organization of data may be different for each type
-	Type     DBType `mapstructure:"type"`
+	Type     internal.DBType    `mapstructure:"type"`
 	// Host
 	Host     string             `mapstructure:"host"`
 	// Port

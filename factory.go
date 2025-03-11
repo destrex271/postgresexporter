@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/destrex271/postgresexporter/internal"
 	"github.com/destrex271/postgresexporter/internal/metadata"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/exporter"
@@ -23,14 +24,14 @@ func NewFactory() exporter.Factory {
 func createDefaultConfig() component.Config {
 	return &Config{
 		DatabaseConfig: DatabaseConfig{
-			Type:     DBTypePostgreSQL,
+			Type:     internal.DBTypePostgreSQL,
 			Host:     "localhost",
 			Port:     5432,
 			Username: "postgres",
 			Password: "postgres",
 			Database: "otel",
 			Schema:   "otel",
-			SSLmode:  "disabled",
+			SSLmode:  "disable",
 		},
 		LogsTableName:    "otellogs",
 		TracesTableName:  "oteltraces",
@@ -41,6 +42,8 @@ func createDefaultConfig() component.Config {
 }
 
 func createMetricsExporter(ctx context.Context, set exporter.Settings, cfg component.Config) (exporter.Metrics, error) {
+	set.Logger.Debug("Creating postgres metrics exporter")
+
 	config := cfg.(*Config)
 
 	exporter, err := newMetricsExporter(config, set)
