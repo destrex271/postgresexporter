@@ -173,8 +173,20 @@ func getServiceName(resAttr pcommon.Map) string {
 
 	return serviceName
 }
+func checkAttributesNumber(attrs pcommon.Map) error {
+	if attrs.Len() > maxAttributesNumber {
+		return fmt.Errorf("max attributes number exceeded")
+	}
 
-func getAttributesAsSlice(attrs pcommon.Map) []*string {
+	return nil
+}
+
+func getAttributesAsSlice(attrs pcommon.Map) ([]*string, error) {
+	err := checkAttributesNumber(attrs)
+	if err != nil {
+		return nil, err
+	}
+
 	result := make([]*string, maxAttributesNumber)
 
 	i := 0
@@ -185,7 +197,7 @@ func getAttributesAsSlice(attrs pcommon.Map) []*string {
 		return true
 	})
 
-	return result
+	return result, nil
 }
 
 func getValue(intValue int64, floatValue float64, dataType any) float64 {

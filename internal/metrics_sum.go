@@ -122,9 +122,12 @@ func (g *sumMetricsGroup) insert(ctx context.Context, client *sql.DB) error {
 				return err
 			}
 
-			for i := 0; i < m.sum.DataPoints().Len(); i++ {
+			for i := range m.sum.DataPoints().Len() {
 				dp := m.sum.DataPoints().At(i)
-				attrs := getAttributesAsSlice(dp.Attributes())
+				attrs, err := getAttributesAsSlice(dp.Attributes())
+				if err != nil {
+					return err
+				}
 
 				tx.Stmt(statement).ExecContext(ctx,
 					m.resMetadata.ResURL, resAttrs,
