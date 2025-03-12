@@ -3,9 +3,12 @@ package internal
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"slices"
 
+	"github.com/destrex271/postgresexporter/internal/db"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 )
@@ -22,8 +25,8 @@ const (
 		attribute11, attribute12, attribute13, attribute14, attribute15,
 		attribute16, attribute17, attribute18, attribute19, attribute20,
 		metadata,
-		count, sum, bucket_counts, explicit_bounds, exemplars, flags, min, max, aggregation_temporality,
-	) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,)
+		count, sum, bucket_counts, explicit_bounds, exemplars, flags, min, max, aggregation_temporality
+	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43)
 	`
 )
 
@@ -41,7 +44,7 @@ var (
 		"min DOUBLE PRECISION",
 		"max DOUBLE PRECISION",
 
-		"aggregation_temporality VARCHAR",
+		"aggregation_temporality INTEGER",
 	}
 )
 
@@ -85,7 +88,99 @@ func (g *histogramMetricsGroup) Add(resMetadata *ResourceMetadata, metric any, n
 func (g *histogramMetricsGroup) insert(ctx context.Context, client *sql.DB) error {
 	logger.Debug("Inserting histogram metrics")
 
-	return fmt.Errorf("not implemented")
+	if g.count == 0 {
+		return nil
+	}
+
+	var errs error
+	for _, m := range g.metrics {
+		err := db.DoWithTx(ctx, client, func(tx *sql.Tx) error {
+			exists, err := CheckIfTableExists(ctx, client, g.SchemaName, m.name)
+			if err != nil {
+				return err
+			}
+
+			if !exists {
+				g.createTable(ctx, client, m.name)
+			}
+
+			statement, err := tx.PrepareContext(ctx, fmt.Sprintf(histogramMetricTableInsertSQL, g.SchemaName, m.name))
+			if err != nil {
+				return err
+			}
+
+			defer func() {
+				_ = statement.Close()
+			}()
+
+			resAttrs, err := json.Marshal(m.resMetadata.ResAttrs.AsRaw())
+			if err != nil {
+				return err
+			}
+
+			scopeAttrs, err := json.Marshal(m.resMetadata.InstrScope.Attributes().AsRaw())
+			if err != nil {
+				return err
+			}
+
+			metadata, err := json.Marshal(m.metadata.AsRaw())
+			if err != nil {
+				return err
+			}
+
+			for i := range m.histogram.DataPoints().Len() {
+				dp := m.histogram.DataPoints().At(i)
+				attrs, err := getAttributesAsSlice(dp.Attributes())
+				if err != nil {
+					return err
+				}
+
+				bucketCounts, err := json.Marshal(dp.BucketCounts().AsRaw())
+				if err != nil {
+					return err
+				}
+
+				explicitBounds, err := json.Marshal(dp.ExplicitBounds().AsRaw())
+				if err != nil {
+					return err
+				}
+
+				tx.Stmt(statement).ExecContext(ctx,
+					m.resMetadata.ResURL, resAttrs,
+					m.resMetadata.InstrScope.Name(),
+					m.resMetadata.InstrScope.Version(),
+					scopeAttrs,
+					m.resMetadata.InstrScope.DroppedAttributesCount(),
+					m.resMetadata.ScopeUrl,
+					getServiceName(m.resMetadata.ResAttrs),
+					m.name, m.description, m.unit,
+					dp.StartTimestamp().AsTime(), dp.Timestamp().AsTime(),
+					attrs[0],  attrs[1],  attrs[2],  attrs[3],  attrs[4],
+					attrs[5],  attrs[6],  attrs[7],  attrs[8],  attrs[9],
+					attrs[10], attrs[11], attrs[12], attrs[13], attrs[14],
+					attrs[15], attrs[16], attrs[17], attrs[18], attrs[19],
+					metadata,
+					dp.Count(),
+					dp.Sum(),
+					bucketCounts,
+					explicitBounds,
+					dp.Exemplars(),
+					uint32(dp.Flags()),
+					dp.Min(),
+					dp.Max(),
+					int32(m.histogram.AggregationTemporality()),
+				)
+			}
+
+			return nil
+		})
+		errs = errors.Join(errs, err)
+	}
+	if errs != nil {
+		return fmt.Errorf("insert histogram metrics failed: %w", errs)
+	}
+
+	return nil
 }
 
 func (g *histogramMetricsGroup) createTable(ctx context.Context, client *sql.DB, metricName string) error {
