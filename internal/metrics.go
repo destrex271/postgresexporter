@@ -30,6 +30,7 @@ var (
     	"service_name             VARCHAR",
 
 		"name        VARCHAR NOT NULL",
+		"type        INTEGER",
 		"description VARCHAR",
 		"unit        VARCHAR",
 
@@ -71,6 +72,7 @@ var (
     	"service_name             VARCHAR",
 
 		"name        VARCHAR NOT NULL",
+		"type        INTEGER",
 		"description VARCHAR",
 		"unit        VARCHAR",
 
@@ -124,11 +126,11 @@ type ResourceMetadata struct {
 // NewMetricsModel create a model for contain different metric data
 func NewMetricsGroupMap(dbtype DBType, schemaName string) map[pmetric.MetricType]MetricsGroup {
 	return map[pmetric.MetricType]MetricsGroup{
-		pmetric.MetricTypeGauge: &gaugeMetricsGroup{DBType: dbtype, SchemaName: schemaName},
-		pmetric.MetricTypeSum: &sumMetricsGroup{DBType: dbtype, SchemaName: schemaName},
-		pmetric.MetricTypeHistogram: &histogramMetricsGroup{DBType: dbtype, SchemaName: schemaName},
-		pmetric.MetricTypeExponentialHistogram: &expHistogramMetricsGroup{DBType: dbtype, SchemaName: schemaName},
-		pmetric.MetricTypeSummary: &summaryMetricsGroup{DBType: dbtype, SchemaName: schemaName},
+		pmetric.MetricTypeGauge: &gaugeMetricsGroup{MetricsType: pmetric.MetricTypeGauge, DBType: dbtype, SchemaName: schemaName},
+		pmetric.MetricTypeSum: &sumMetricsGroup{MetricsType: pmetric.MetricTypeSum, DBType: dbtype, SchemaName: schemaName},
+		pmetric.MetricTypeHistogram: &histogramMetricsGroup{MetricsType: pmetric.MetricTypeHistogram, DBType: dbtype, SchemaName: schemaName},
+		pmetric.MetricTypeExponentialHistogram: &expHistogramMetricsGroup{MetricsType: pmetric.MetricTypeExponentialHistogram, DBType: dbtype, SchemaName: schemaName},
+		pmetric.MetricTypeSummary: &summaryMetricsGroup{MetricsType: pmetric.MetricTypeSummary, DBType: dbtype, SchemaName: schemaName},
 	}
 }
 

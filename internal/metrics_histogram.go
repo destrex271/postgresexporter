@@ -18,7 +18,7 @@ const (
 	INSERT INTO %s.%s (
 		resource_url, resource_attributes,
 		scope_name, scope_version, scope_attributes, scope_dropped_attr_count, scope_url, service_name,
-		name, description, unit,
+		name, type, description, unit,
 		start_timestamp, timestamp,
 		attribute1, attribute2, attribute3, attribute4, attribute5,
 		attribute6, attribute7, attribute8, attribute9, attribute10,
@@ -26,7 +26,7 @@ const (
 		attribute16, attribute17, attribute18, attribute19, attribute20,
 		metadata,
 		count, sum, bucket_counts, explicit_bounds, exemplars, flags, min, max, aggregation_temporality
-	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43)
+	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44)
 	`
 )
 
@@ -59,6 +59,8 @@ type histogramMetric struct {
 }
 
 type histogramMetricsGroup struct {
+	MetricsType pmetric.MetricType
+
 	DBType     DBType
 	SchemaName string
 
@@ -153,7 +155,7 @@ func (g *histogramMetricsGroup) insert(ctx context.Context, client *sql.DB) erro
 					m.resMetadata.InstrScope.DroppedAttributesCount(),
 					m.resMetadata.ScopeUrl,
 					getServiceName(m.resMetadata.ResAttrs),
-					m.name, m.description, m.unit,
+					m.name, int32(g.MetricsType), m.description, m.unit,
 					dp.StartTimestamp().AsTime(), dp.Timestamp().AsTime(),
 					attrs[0],  attrs[1],  attrs[2],  attrs[3],  attrs[4],
 					attrs[5],  attrs[6],  attrs[7],  attrs[8],  attrs[9],
