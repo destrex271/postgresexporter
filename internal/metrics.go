@@ -175,6 +175,7 @@ func getServiceName(resAttr pcommon.Map) string {
 
 	return serviceName
 }
+
 func checkAttributesNumber(attrs pcommon.Map) error {
 	if attrs.Len() > maxAttributesNumber {
 		return fmt.Errorf("max attributes number exceeded")

@@ -134,22 +134,26 @@ func (g *histogramMetricsGroup) insert(ctx context.Context, client *sql.DB) erro
 				dp := m.histogram.DataPoints().At(i)
 
 				if dp.Timestamp().AsTime().IsZero() {
-					return fmt.Errorf("data points with the 0 value for TimeUnixNano SHOULD be rejected by consumers")
+					errs = errors.Join(errs, fmt.Errorf("data points with the 0 value for TimeUnixNano SHOULD be rejected by consumers"))
+					continue
 				}
 
 				attrs, err := getAttributesAsSlice(dp.Attributes())
 				if err != nil {
-					return err
+					errs = errors.Join(errs, err)
+					continue
 				}
 
 				bucketCounts, err := json.Marshal(dp.BucketCounts().AsRaw())
 				if err != nil {
-					return err
+					errs = errors.Join(errs, err)
+					continue
 				}
 
 				explicitBounds, err := json.Marshal(dp.ExplicitBounds().AsRaw())
 				if err != nil {
-					return err
+					errs = errors.Join(errs, err)
+					continue
 				}
 
 				tx.Stmt(statement).ExecContext(ctx,

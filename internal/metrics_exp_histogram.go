@@ -141,22 +141,26 @@ func (g *expHistogramMetricsGroup) insert(ctx context.Context, client *sql.DB) e
 				dp := m.expHistogram.DataPoints().At(i)
 
 				if dp.Timestamp().AsTime().IsZero() {
-					return fmt.Errorf("data points with the 0 value for TimeUnixNano SHOULD be rejected by consumers")
+					errs = errors.Join(errs, fmt.Errorf("data points with the 0 value for TimeUnixNano SHOULD be rejected by consumers"))
+					continue
 				}
 
 				attrs, err := getAttributesAsSlice(dp.Attributes())
 				if err != nil {
-					return err
+					errs = errors.Join(errs, err)
+					continue
 				}
 
 				positiveBucketCounts, err := json.Marshal(dp.Positive().BucketCounts().AsRaw())
 				if err != nil {
-					return err
+					errs = errors.Join(errs, err)
+					continue
 				}
 
 				negativeBucketCounts, err := json.Marshal(dp.Negative().BucketCounts().AsRaw())
 				if err != nil {
-					return err
+					errs = errors.Join(errs, err)
+					continue
 				}
 
 				tx.Stmt(statement).ExecContext(ctx,
