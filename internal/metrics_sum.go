@@ -126,6 +126,11 @@ func (g *sumMetricsGroup) insert(ctx context.Context, client *sql.DB) error {
 
 			for i := range m.sum.DataPoints().Len() {
 				dp := m.sum.DataPoints().At(i)
+
+				if dp.Timestamp().AsTime().IsZero() {
+					return fmt.Errorf("data points with the 0 value for TimeUnixNano SHOULD be rejected by consumers")
+				}
+
 				attrs, err := getAttributesAsSlice(dp.Attributes())
 				if err != nil {
 					return err

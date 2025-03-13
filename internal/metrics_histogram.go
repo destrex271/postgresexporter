@@ -132,6 +132,11 @@ func (g *histogramMetricsGroup) insert(ctx context.Context, client *sql.DB) erro
 
 			for i := range m.histogram.DataPoints().Len() {
 				dp := m.histogram.DataPoints().At(i)
+
+				if dp.Timestamp().AsTime().IsZero() {
+					return fmt.Errorf("data points with the 0 value for TimeUnixNano SHOULD be rejected by consumers")
+				}
+
 				attrs, err := getAttributesAsSlice(dp.Attributes())
 				if err != nil {
 					return err

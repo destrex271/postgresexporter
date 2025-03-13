@@ -124,6 +124,11 @@ func (g *summaryMetricsGroup) insert(ctx context.Context, client *sql.DB) error 
 
 			for i := range m.summary.DataPoints().Len() {
 				dp := m.summary.DataPoints().At(i)
+
+				if dp.Timestamp().AsTime().IsZero() {
+					return fmt.Errorf("data points with the 0 value for TimeUnixNano SHOULD be rejected by consumers")
+				}
+
 				attrs, err := getAttributesAsSlice(dp.Attributes())
 				if err != nil {
 					return err
