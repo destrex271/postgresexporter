@@ -94,6 +94,13 @@ func (g *histogramMetricsGroup) insert(ctx context.Context, client *sql.DB) erro
 		return nil
 	}
 
+	attributesMappings, err := getAttributesMappingsByNames(ctx, client, g.SchemaName, g.getMetricsNames())
+	if err != nil {
+		return err
+	}
+
+	attributesMappingsMap := groupAttrsMappingsByName(attributesMappings)
+
 	var errs error
 	for _, m := range g.metrics {
 		err := db.DoWithTx(ctx, client, func(tx *sql.Tx) error {
@@ -138,10 +145,24 @@ func (g *histogramMetricsGroup) insert(ctx context.Context, client *sql.DB) erro
 					continue
 				}
 
-				attrs, err := getAttributesAsSlice(dp.Attributes())
+				attrsMapping, present := attributesMappingsMap[m.name]
+				if !present {
+					attrsMapping = attributesMapping{Name: m.name}
+					insertAttributesMapping(ctx, client, g.SchemaName, &attrsMapping)
+				}
+
+				attrs, updated, err := getAttributesAsSliceAndCheckIfUpdated(dp.Attributes(), &attrsMapping)
 				if err != nil {
 					errs = errors.Join(errs, err)
 					continue
+				}
+
+				if updated {
+					err = updateAttributesMapping(ctx, client, g.SchemaName, &attrsMapping)
+					if err != nil {
+						errs = errors.Join(errs, err)
+						continue
+					}
 				}
 
 				bucketCounts, err := json.Marshal(dp.BucketCounts().AsRaw())
@@ -198,4 +219,14 @@ func (g *histogramMetricsGroup) createTable(ctx context.Context, client *sql.DB,
 	metricTableColumns := slices.Concat(getBaseMetricTableColumns(g.DBType), histogramMetricTableColumns)
 
 	return createMetricTable(ctx, client, g.SchemaName, metricName, metricTableColumns)
+}
+
+func (g *histogramMetricsGroup) getMetricsNames() []string {
+	result := []string{}
+
+	for _, m := range g.metrics {
+		result = append(result, m.name)
+	}
+
+	return result
 }

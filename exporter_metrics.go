@@ -100,6 +100,10 @@ func (e *metricsExporter) Start(ctx context.Context, host component.Host) error 
 		return err
 	}
 
+	if err := internal.CreateAttributesMappingTable(ctx, e.client, e.config.DatabaseConfig.Schema); err != nil {
+		return err
+	}
+
 	return nil
 }
 

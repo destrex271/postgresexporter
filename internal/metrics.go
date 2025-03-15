@@ -14,7 +14,7 @@ import (
 
 // https://developers.cloudflare.com/analytics/analytics-engine/sql-api/#table-structure
 const (
-	// TODO: move it to the exporter config
+	// TODO: move it to the exporter config and make configurable
 	maxAttributesNumber = 20
 )
 
@@ -114,6 +114,8 @@ type MetricsGroup interface {
 	createTable(ctx context.Context, client *sql.DB, metricName string) error
 	// Inserts metric data to db
 	insert(ctx context.Context, client *sql.DB) error
+	// Return metrics names
+	getMetricsNames() []string
 }
 
 type ResourceMetadata struct {
@@ -184,23 +186,48 @@ func checkAttributesNumber(attrs pcommon.Map) error {
 	return nil
 }
 
-func getAttributesAsSlice(attrs pcommon.Map) ([]*string, error) {
+func getAttributesAsSliceAndCheckIfUpdated(attrs pcommon.Map, attributesMapping *attributesMapping) ([]*string, bool, error) {
 	err := checkAttributesNumber(attrs)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	result := make([]*string, maxAttributesNumber)
 
-	i := 0
+	attrNameAndPosMap, err := getAttrsNameAndPosMap(attributesMapping)
+	if err != nil {
+		return nil, false, err
+	}
+
+	updated := false
+
 	attrs.Range(func(k string, v pcommon.Value) bool {
+		attrPos, present := attrNameAndPosMap[k]
+		if !present {
+			attrPos, err = findNextAvailableAttrPos(attributesMapping)
+			if err != nil {
+				return false
+			}
+
+			err = setAttrValueByPos(attributesMapping, attrPos, k)
+			if err != nil {
+				return false
+			}
+
+			updated = true
+		}
+
 		value := v.AsString()
-		result[i] = &value
-		i += 1
+		result[attrPos-1] = &value
+
 		return true
 	})
 
-	return result, nil
+	if err != nil {
+		return nil, false, err
+	}
+
+	return result, updated, nil
 }
 
 func getValue(intValue int64, floatValue float64, dataType any) float64 {
