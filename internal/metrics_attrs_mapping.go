@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	attributesMappingTableName = "attributes_mappings"
+	attributesMappingTableName = "_attributes_mappings"
 
 	attributesMappingAttributeFieldName = "Attribute"
 
