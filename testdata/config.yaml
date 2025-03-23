@@ -1,10 +1,24 @@
-postgresexporter:
-    username: "postgres"
-    password: "postgres"
-    database: "postgres"
-    logs_table_name: "otellogs"
-    traces_table_name: "oteltraces"
-    metrics_table_name: "otelmetrics"
-    port: "5432"
-    hostname: "localhost"
-
+postgres/default:
+postgres/postgresql:
+  database:
+    type: postgresql
+    host: "<host>"
+    port: 5432
+    username: "<username>"
+    password: "<password>"
+    database: "<database>"
+    schema: "<schema>"
+    sslmode: "<sslmode>"
+  logs_table_name: "<logs_table_name>"
+  traces_table_name: "<traces_table_name>"
+  create_schema: false
+postgres/timescaledb:
+  database:
+    type: timescaledb
+    host: "<host>"
+    port: 5432
+    username: "<username>"
+    password: "<password>"
+    database: "<database>"
+    schema: "<schema>"
+  create_schema: true
