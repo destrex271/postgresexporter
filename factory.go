@@ -33,11 +33,11 @@ func createDefaultConfig() component.Config {
 			Schema:   "otel",
 			SSLmode:  "disable",
 		},
-		LogsTableName:    "otellogs",
-		TracesTableName:  "oteltraces",
-		CreateSchema: true,
+		LogsTableName:   "otellogs",
+		TracesTableName: "oteltraces",
+		CreateSchema:    true,
 		TimeoutSettings: exporterhelper.NewDefaultTimeoutConfig(),
-		QueueSettings: exporterhelper.NewDefaultQueueConfig(),
+		QueueSettings:   exporterhelper.NewDefaultQueueConfig(),
 	}
 }
 
