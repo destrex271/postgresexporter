@@ -15,7 +15,7 @@ const (
 	attributesMappingAttributeFieldName = "Attribute"
 
 	attributesMappingInsertSQL = `
-	INSERT INTO "%s"."%s" (name) VALUES ($1)
+	INSERT INTO "%s"."%s" (name) VALUES ($1) ON CONFLICT (name) DO NOTHING
 	`
 
 	attributesMappingUpdateSQL = `
