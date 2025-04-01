@@ -140,7 +140,13 @@ func (g *summaryMetricsGroup) insert(ctx context.Context, client *sql.DB) error 
 				attrsMapping, present := attributesMappingsMap[m.name]
 				if !present {
 					attrsMapping = attributesMapping{Name: m.name}
-					insertAttributesMapping(ctx, client, g.SchemaName, &attrsMapping)
+					err = insertAttributesMapping(ctx, client, g.SchemaName, &attrsMapping)
+					if err != nil {
+						errs = errors.Join(errs, err)
+						continue
+					}
+
+					attributesMappingsMap[attrsMapping.Name] = attrsMapping
 				}
 
 				attrs, updated, err := getAttributesAsSliceAndCheckIfUpdated(dp.Attributes(), &attrsMapping)
