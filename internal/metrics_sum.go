@@ -202,7 +202,7 @@ func (g *sumMetricsGroup) insert(ctx context.Context, client *sql.DB) error {
 func (g *sumMetricsGroup) createTable(ctx context.Context, client *sql.DB, metricName string) error {
 	metricTableColumns := slices.Concat(getBaseMetricTableColumns(g.DBType), sumMetricTableColumns)
 
-	return createMetricTable(ctx, client, g.SchemaName, metricName, metricTableColumns)
+	return createMetricTable(ctx, client, g.SchemaName, metricName, metricTableColumns, g.DBType)
 }
 
 func (g *sumMetricsGroup) getMetricsNames() []string {

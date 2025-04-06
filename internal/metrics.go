@@ -10,12 +10,19 @@ import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	conventions "go.opentelemetry.io/collector/semconv/v1.27.0"
+	"go.uber.org/zap"
 )
 
 // https://developers.cloudflare.com/analytics/analytics-engine/sql-api/#table-structure
 const (
 	// TODO: move it to the exporter config and make configurable
 	maxAttributesNumber = 20
+
+	timestampMetricTableColumnName = "timestamp"
+
+	timescaleDBSpecificMetricTableQuery = `
+	SELECT create_hypertable('%s.%s', by_range('%s'), migrate_data => true, if_not_exists => true);
+	`
 )
 
 var (
@@ -159,11 +166,35 @@ func getBaseMetricTableColumns(dbtype DBType) []string {
 	return tableColumns
 }
 
-func createMetricTable(ctx context.Context, client *sql.DB, schemaName, metricName string, tableColumns []string) error {
+func createMetricTable(ctx context.Context, client *sql.DB, schemaName, metricName string, tableColumns []string, dbtype DBType) error {
 	query := fmt.Sprintf(createTableIfNotExistsSQL, schemaName, metricName, strings.Join(tableColumns, ","))
 	_, err := client.ExecContext(ctx, query)
 	if err != nil {
 		return fmt.Errorf("failed creating schema: %w", err)
+	}
+
+	executeSpecificMetricTableQuery(ctx, client, schemaName, metricName, dbtype)
+
+	return nil
+}
+
+// Constructs and executes a database-specific query for a given metric table.
+// For example, if the dbtype is TimescaleDB it creates hypertable.
+func executeSpecificMetricTableQuery(ctx context.Context, client *sql.DB, schemaName, metricName string, dbtype DBType) error {
+	var specificMetricTableQuery string
+	switch (dbtype) {
+	case DBTypeTimescaleDB:
+		specificMetricTableQuery = fmt.Sprintf(timescaleDBSpecificMetricTableQuery,
+			schemaName, metricName, timestampMetricTableColumnName)
+	default:
+		specificMetricTableQuery = ""
+	}
+
+	if specificMetricTableQuery != "" {
+		_, err := client.ExecContext(ctx, specificMetricTableQuery)
+		if err != nil {
+			logger.Warn("failed to execute specific metric table query", zap.String("dbtype", metricName), zap.Any("dbtype", dbtype))
+		}
 	}
 
 	return nil

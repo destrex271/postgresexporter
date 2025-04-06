@@ -197,7 +197,7 @@ func (g *gaugeMetricsGroup) insert(ctx context.Context, client *sql.DB) error {
 func (g *gaugeMetricsGroup) createTable(ctx context.Context, client *sql.DB, metricName string) error {
 	metricTableColumns := slices.Concat(getBaseMetricTableColumns(g.DBType), gaugeMetricTableColumns)
 
-	return createMetricTable(ctx, client, g.SchemaName, metricName, metricTableColumns)
+	return createMetricTable(ctx, client, g.SchemaName, metricName, metricTableColumns, g.DBType)
 }
 
 func (g *gaugeMetricsGroup) getMetricsNames() []string {

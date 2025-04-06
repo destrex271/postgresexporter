@@ -236,7 +236,7 @@ func (g *expHistogramMetricsGroup) insert(ctx context.Context, client *sql.DB) e
 func (g *expHistogramMetricsGroup) createTable(ctx context.Context, client *sql.DB, metricName string) error {
 	metricTableColumns := slices.Concat(getBaseMetricTableColumns(g.DBType), expHistogramMetricTableColumns)
 
-	return createMetricTable(ctx, client, g.SchemaName, metricName, metricTableColumns)
+	return createMetricTable(ctx, client, g.SchemaName, metricName, metricTableColumns, g.DBType)
 }
 
 func (g *expHistogramMetricsGroup) getMetricsNames() []string {
