@@ -141,7 +141,7 @@ func (g *sumMetricsGroup) insert(ctx context.Context, client *sql.DB) error {
 
 				attrsMapping, present := attributesMappingsMap[m.name]
 				if !present {
-					attrsMapping = attributesMapping{Name: m.name}
+					attrsMapping = AttributesMapping{Name: m.name}
 					err = insertAttributesMapping(ctx, client, g.SchemaName, &attrsMapping)
 					if err != nil {
 						errs = errors.Join(errs, err)

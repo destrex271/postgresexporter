@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	attributesMappingTableName = "_attributes_mappings"
+	AttributesMappingTableName = "_attributes_mappings"
 
-	attributesMappingAttributeFieldName = "Attribute"
+	AttributesMappingAttributeFieldName = "Attribute"
 
 	attributesMappingInsertSQL = `
 	INSERT INTO "%s"."%s" (name) VALUES ($1) ON CONFLICT (name) DO NOTHING
@@ -55,7 +55,7 @@ var (
 	}
 )
 
-type attributesMapping struct {
+type AttributesMapping struct {
 	Name string `db:"name"`
 
 	Attribute1  string `db:"attribute1"`
@@ -82,7 +82,7 @@ type attributesMapping struct {
 
 func CreateAttributesMappingTable(ctx context.Context, client *sql.DB, schemaName string) error {
 	query := fmt.Sprintf(createTableIfNotExistsSQL,
-		schemaName, attributesMappingTableName, strings.Join(attributesMappingTableColumns, ","),
+		schemaName, AttributesMappingTableName, strings.Join(attributesMappingTableColumns, ","),
 	)
 	_, err := client.ExecContext(ctx, query)
 	if err != nil {
@@ -92,29 +92,29 @@ func CreateAttributesMappingTable(ctx context.Context, client *sql.DB, schemaNam
 	return nil
 }
 
-func insertAttributesMapping(ctx context.Context, client *sql.DB, schemaName string, attributesMapping *attributesMapping) error {
-	query := fmt.Sprintf(attributesMappingInsertSQL, schemaName, attributesMappingTableName)
+func insertAttributesMapping(ctx context.Context, client *sql.DB, schemaName string, attributesMapping *AttributesMapping) error {
+	query := fmt.Sprintf(attributesMappingInsertSQL, schemaName, AttributesMappingTableName)
 	_, err := client.ExecContext(ctx, query, attributesMapping.Name)
 
 	return err
 }
 
-func updateAttributesMapping(ctx context.Context, client *sql.DB, schemaName string, attributesMapping *attributesMapping) error {
-	query := fmt.Sprintf(attributesMappingUpdateSQL, schemaName, attributesMappingTableName)
+func updateAttributesMapping(ctx context.Context, client *sql.DB, schemaName string, attributesMapping *AttributesMapping) error {
+	query := fmt.Sprintf(attributesMappingUpdateSQL, schemaName, AttributesMappingTableName)
 	args := extractArgs(attributesMapping)
 	_, err := client.ExecContext(ctx, query, args...)
 
 	return err
 }
 
-func getAttributesMappingsByNames(ctx context.Context, client *sql.DB, schemaName string, names []string) ([]attributesMapping, error) {
+func getAttributesMappingsByNames(ctx context.Context, client *sql.DB, schemaName string, names []string) ([]AttributesMapping, error) {
 	query := `SELECT * FROM "%s"."%s" WHERE name = ANY($1)`
-	rows, err := client.QueryContext(ctx, fmt.Sprintf(query, schemaName, attributesMappingTableName), names)
+	rows, err := client.QueryContext(ctx, fmt.Sprintf(query, schemaName, AttributesMappingTableName), names)
 	if err != nil {
 		return nil, err
 	}
 
-	result := []attributesMapping{}
+	result := []AttributesMapping{}
 
 	columns, err := rows.Columns()
 	if err != nil {
@@ -122,7 +122,7 @@ func getAttributesMappingsByNames(ctx context.Context, client *sql.DB, schemaNam
 	}
 
 	for rows.Next() {
-		am := attributesMapping{}
+		am := AttributesMapping{}
 
 		values := make([]any, len(columns))
 		for i := range values {
@@ -142,7 +142,7 @@ func getAttributesMappingsByNames(ctx context.Context, client *sql.DB, schemaNam
 	return result, nil
 }
 
-func extractArgs(attrsMapping *attributesMapping) []any {
+func extractArgs(attrsMapping *AttributesMapping) []any {
 	attrsMappingVal := reflect.Indirect(reflect.ValueOf(attrsMapping))
 
 	args := make([]any, attrsMappingVal.NumField())
@@ -160,7 +160,7 @@ func extractArgs(attrsMapping *attributesMapping) []any {
 	return args
 }
 
-func setValuesToAttrsMappingFields(attrsMapping *attributesMapping, values []any) error {
+func setValuesToAttrsMappingFields(attrsMapping *AttributesMapping, values []any) error {
 	attrsMappingVal := reflect.Indirect(reflect.ValueOf(attrsMapping))
 
 	for i := range attrsMappingVal.NumField() {
@@ -183,8 +183,8 @@ func setValuesToAttrsMappingFields(attrsMapping *attributesMapping, values []any
 	return nil
 }
 
-func groupAttrsMappingsByName(attrsMappings []attributesMapping) map[string]attributesMapping {
-	result := map[string]attributesMapping{}
+func groupAttrsMappingsByName(attrsMappings []AttributesMapping) map[string]AttributesMapping {
+	result := map[string]AttributesMapping{}
 
 	for _, am := range attrsMappings {
 		result[am.Name] = am
@@ -193,12 +193,12 @@ func groupAttrsMappingsByName(attrsMappings []attributesMapping) map[string]attr
 	return result
 }
 
-func getAttrsNameAndPosMap(attrsMapping *attributesMapping) (map[string]int, error) {
+func getAttrsNameAndPosMap(attrsMapping *AttributesMapping) (map[string]int, error) {
 	result := map[string]int{}
 
 	attrsMappingVal := reflect.Indirect(reflect.ValueOf(attrsMapping))
 	for pos := 1; pos <= maxAttributesNumber; pos++ {
-		field := attrsMappingVal.FieldByName(attributesMappingAttributeFieldName + strconv.Itoa(pos))
+		field := attrsMappingVal.FieldByName(AttributesMappingAttributeFieldName + strconv.Itoa(pos))
 
 		if field.IsValid() {
 			if !field.IsZero() {
@@ -214,10 +214,10 @@ func getAttrsNameAndPosMap(attrsMapping *attributesMapping) (map[string]int, err
 	return result, nil
 }
 
-func findNextAvailableAttrPos(attrsMapping *attributesMapping) (int, error) {
+func findNextAvailableAttrPos(attrsMapping *AttributesMapping) (int, error) {
 	attrsMappingVal := reflect.ValueOf(attrsMapping).Elem()
 	for pos := 1; pos <= maxAttributesNumber; pos++ {
-		field := attrsMappingVal.FieldByName(attributesMappingAttributeFieldName + strconv.Itoa(pos))
+		field := attrsMappingVal.FieldByName(AttributesMappingAttributeFieldName + strconv.Itoa(pos))
 
 		if field.IsZero() {
 			return pos, nil
@@ -227,10 +227,10 @@ func findNextAvailableAttrPos(attrsMapping *attributesMapping) (int, error) {
 	return 0, fmt.Errorf("there are no more available attribute positions")
 }
 
-func setAttrValueByPos(attrsMapping *attributesMapping, pos int, name string) error {
+func setAttrValueByPos(attrsMapping *AttributesMapping, pos int, name string) error {
 	attrsMappingVal := reflect.Indirect(reflect.ValueOf(attrsMapping))
 
-	field := attrsMappingVal.FieldByName(attributesMappingAttributeFieldName + strconv.Itoa(pos))
+	field := attrsMappingVal.FieldByName(AttributesMappingAttributeFieldName + strconv.Itoa(pos))
 	if !field.CanSet() {
 		return fmt.Errorf("attribute field can't be set")
 	}

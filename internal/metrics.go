@@ -217,7 +217,7 @@ func checkAttributesNumber(attrs pcommon.Map) error {
 	return nil
 }
 
-func getAttributesAsSliceAndCheckIfUpdated(attrs pcommon.Map, attributesMapping *attributesMapping) ([]*string, bool, error) {
+func getAttributesAsSliceAndCheckIfUpdated(attrs pcommon.Map, attributesMapping *AttributesMapping) ([]*string, bool, error) {
 	err := checkAttributesNumber(attrs)
 	if err != nil {
 		return nil, false, err
