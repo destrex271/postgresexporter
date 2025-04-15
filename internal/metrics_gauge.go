@@ -85,7 +85,7 @@ func (g *gaugeMetricsGroup) insert(ctx context.Context, client *sql.DB) error {
 		return nil
 	}
 
-	attributesMappings, err := getAttributesMappingsByNames(ctx, client, g.SchemaName, g.getMetricsNames())
+	attributesMappings, err := GetAttributesMappingsByNames(ctx, client, g.SchemaName, g.getMetricsNames())
 	if err != nil {
 		return err
 	}

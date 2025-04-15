@@ -94,7 +94,7 @@ func (g *histogramMetricsGroup) insert(ctx context.Context, client *sql.DB) erro
 		return nil
 	}
 
-	attributesMappings, err := getAttributesMappingsByNames(ctx, client, g.SchemaName, g.getMetricsNames())
+	attributesMappings, err := GetAttributesMappingsByNames(ctx, client, g.SchemaName, g.getMetricsNames())
 	if err != nil {
 		return err
 	}

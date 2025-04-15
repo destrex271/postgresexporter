@@ -11,7 +11,6 @@ import (
 
 const (
 	AttributesMappingTableName = "_attributes_mappings"
-
 	AttributesMappingAttributeFieldName = "Attribute"
 
 	attributesMappingInsertSQL = `
@@ -107,7 +106,40 @@ func updateAttributesMapping(ctx context.Context, client *sql.DB, schemaName str
 	return err
 }
 
-func getAttributesMappingsByNames(ctx context.Context, client *sql.DB, schemaName string, names []string) ([]AttributesMapping, error) {
+func extractArgs(attrsMapping *AttributesMapping) []any {
+	attrsMappingVal := reflect.Indirect(reflect.ValueOf(attrsMapping))
+
+	args := make([]any, attrsMappingVal.NumField())
+
+	for i := range attrsMappingVal.NumField() {
+		field := attrsMappingVal.Field(i)
+
+		if field.IsValid() && !field.IsZero() {
+			args[i] = field.String()
+		} else {
+			args[i] = nil
+		}
+	}
+
+	return args
+}
+
+func GetAttributesMappingByName(ctx context.Context, client *sql.DB, schemaName string, name string) (AttributesMapping, error) {
+	attributesMappings, err := GetAttributesMappingsByNames(ctx, client, schemaName, []string{name})
+	if err != nil {
+		return AttributesMapping{}, err
+	}
+
+	if len(attributesMappings) == 0 {
+		return AttributesMapping{}, fmt.Errorf("attributes mapping not found")
+	} else if len(attributesMappings) == 1 {
+		return attributesMappings[0], nil
+	}
+
+	return AttributesMapping{}, fmt.Errorf("multiple attributes mappings were found")
+}
+
+func GetAttributesMappingsByNames(ctx context.Context, client *sql.DB, schemaName string, names []string) ([]AttributesMapping, error) {
 	query := `SELECT * FROM "%s"."%s" WHERE name = ANY($1)`
 	rows, err := client.QueryContext(ctx, fmt.Sprintf(query, schemaName, AttributesMappingTableName), names)
 	if err != nil {
@@ -142,24 +174,6 @@ func getAttributesMappingsByNames(ctx context.Context, client *sql.DB, schemaNam
 	return result, nil
 }
 
-func extractArgs(attrsMapping *AttributesMapping) []any {
-	attrsMappingVal := reflect.Indirect(reflect.ValueOf(attrsMapping))
-
-	args := make([]any, attrsMappingVal.NumField())
-
-	for i := range attrsMappingVal.NumField() {
-		field := attrsMappingVal.Field(i)
-
-		if field.IsValid() && !field.IsZero() {
-			args[i] = field.String()
-		} else {
-			args[i] = nil
-		}
-	}
-
-	return args
-}
-
 func setValuesToAttrsMappingFields(attrsMapping *AttributesMapping, values []any) error {
 	attrsMappingVal := reflect.Indirect(reflect.ValueOf(attrsMapping))
 
@@ -181,6 +195,33 @@ func setValuesToAttrsMappingFields(attrsMapping *AttributesMapping, values []any
 	}
 
 	return nil
+}
+
+func GetAttributesValueAndFieldNameMap(attrsMapping *AttributesMapping) (map[string]string, error) {
+	result := map[string]string{}
+
+	attrsMappingVal := reflect.Indirect(reflect.ValueOf(attrsMapping))
+	attrsMappingTyp := attrsMappingVal.Type()
+	for n := range attrsMappingTyp.NumField() {
+		fieldTyp := attrsMappingTyp.Field(n)
+		fieldVal := attrsMappingVal.Field(n)
+
+		if fieldVal.IsValid() {
+			if !strings.HasPrefix(fieldTyp.Name, AttributesMappingAttributeFieldName) {
+				continue
+			}
+
+			if !fieldVal.IsZero() {
+				result[fieldVal.String()] = fieldTyp.Tag.Get("db")
+			} else {
+				break
+			}
+		} else {
+			return nil, fmt.Errorf("invalid attributes mapping field value")
+		}
+	}
+
+	return result, nil
 }
 
 func groupAttrsMappingsByName(attrsMappings []AttributesMapping) map[string]AttributesMapping {
