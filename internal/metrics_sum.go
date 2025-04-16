@@ -163,6 +163,8 @@ func (g *sumMetricsGroup) insert(ctx context.Context, client *sql.DB) error {
 						errs = errors.Join(errs, err)
 						continue
 					}
+
+					attributesMappingsMap[attrsMapping.Name] = attrsMapping
 				}
 
 				tx.Stmt(statement).ExecContext(ctx,
