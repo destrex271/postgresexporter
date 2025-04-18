@@ -15,7 +15,7 @@ import (
 
 const (
 	gaugeMetricTableInsertSQL = `
-	INSERT INTO %s.%s (
+	INSERT INTO "%s"."%s" (
 		resource_url, resource_attributes,
 		scope_name, scope_version, scope_attributes, scope_dropped_attr_count, scope_url, service_name,
 		name, type, description, unit,
