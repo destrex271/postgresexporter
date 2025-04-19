@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/destrex271/postgresexporter/internal/traceutil"
-	_ "github.com/lib/pq"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/ptrace"
 	conventions "go.opentelemetry.io/collector/semconv/v1.27.0"
@@ -23,7 +22,7 @@ type tracesExporter struct {
 }
 
 func newTracesExporter(logger *zap.Logger, cfg *Config) (*tracesExporter, error) {
-	client, err := newPostgresClient(cfg)
+	client, err := cfg.buildDB()
 	if err != nil {
 		return nil, err
 	}

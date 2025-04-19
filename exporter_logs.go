@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/destrex271/postgresexporter/internal/traceutil"
-	_ "github.com/lib/pq"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
@@ -25,7 +24,7 @@ type logsExporter struct {
 }
 
 func newLogsExporter(logger *zap.Logger, cfg *Config) (*logsExporter, error) {
-	client, err := newPostgresClient(cfg)
+	client, err := cfg.buildDB()
 	if err != nil {
 		return nil, err
 	}
@@ -120,18 +119,6 @@ func (e *logsExporter) pushLogsData(ctx context.Context, ld plog.Logs) error {
 	return err
 }
 
-func newPostgresClient(cfg *Config) (*sql.DB, error) {
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		cfg.Host, cfg.Port, cfg.Username, cfg.Password, cfg.Database)
-	log.Println("Info HERERERERER ->", psqlInfo)
-	db, err := sql.Open("postgres", psqlInfo)
-
-	if err != nil {
-		return nil, err
-	}
-	return db, nil
-}
-
 // DB functions
 func createLogsTable(ctx context.Context, cfg *Config, db *sql.DB) error {
 	log.Println("Creating table....", cfg.LogsTableName)
@@ -224,7 +211,6 @@ func attributesToMap(attributes pcommon.Map) string {
 
 func marshalSliceToString(data interface{}) string {
 	json_string, err := json.Marshal(data)
-
 	if err != nil {
 		panic("Unable to parse data(json/string slice) to string")
 	}
