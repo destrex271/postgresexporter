@@ -113,7 +113,7 @@ service:
 You can modify the values according to your requirements
 
 6. Although the logs will clarify if the exporter worked or not, you can also check if the tables were
-created your postgres database. For this you can open up psql and run the following commands:
+created your in postgres database. For this you can open up psql and run the following commands:
 
 ```psql
 postgres=# \d
