@@ -1,0 +1,6 @@
+type: postgres
+
+status:
+  class: exporter
+  stability:
+    development: [metrics, logs, traces]
