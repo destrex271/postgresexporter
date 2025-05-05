@@ -36,6 +36,7 @@ func createDefaultConfig() component.Config {
 		LogsTableName:   "otellogs",
 		TracesTableName: "oteltraces",
 		CreateSchema:    true,
+		SepTables:       true,
 		TimeoutSettings: exporterhelper.NewDefaultTimeoutConfig(),
 		QueueSettings:   exporterhelper.NewDefaultQueueConfig(),
 	}

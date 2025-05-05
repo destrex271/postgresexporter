@@ -10,7 +10,7 @@ import (
 
 type Config struct {
 	// Database config
-	DatabaseConfig  DatabaseConfig               `mapstructure:"database"`
+	DatabaseConfig DatabaseConfig `mapstructure:"database"`
 
 	// Decided to create separate tables for each metric to provide better performance.
 	// But you can define DatabaseConfig.Schema in which to create it.
@@ -18,37 +18,39 @@ type Config struct {
 	// MetricsTableName string                       `mapstructure:"metrics_table_name"`
 
 	// Logs table name
-	LogsTableName   string                       `mapstructure:"logs_table_name"`
+	LogsTableName string `mapstructure:"logs_table_name"`
 	// Traces table name
-	TracesTableName string                       `mapstructure:"traces_table_name"`
+	TracesTableName string `mapstructure:"traces_table_name"`
 
 	// Pre-create the schema and tables if true. Default - true.
-	CreateSchema    bool                         `mapstructure:"create_schema"`
+	CreateSchema bool `mapstructure:"create_schema"`
 
 	// Timeout
 	TimeoutSettings exporterhelper.TimeoutConfig `mapstructure:",squash"`
 	// Sending queue settings
-	QueueSettings   exporterhelper.QueueConfig   `mapstructure:"sending_queue"`
+	QueueSettings exporterhelper.QueueConfig `mapstructure:"sending_queue"`
+	// Do we want separate tables for each metric?
+	SepTables bool `mapstructure:"sep_tables"`
 }
 
 type DatabaseConfig struct {
 	// Type. Can be 'postgresql', 'timescaledb', 'paradedb' etc.
 	// The structure of data may be different for each type
-	Type     internal.DBType    `mapstructure:"type"`
+	Type internal.DBType `mapstructure:"type"`
 	// Host
-	Host     string             `mapstructure:"host"`
+	Host string `mapstructure:"host"`
 	// Port
-	Port     int                `mapstructure:"port"`
+	Port int `mapstructure:"port"`
 	// Username
-	Username string             `mapstructure:"username"`
+	Username string `mapstructure:"username"`
 	// Password
-	Password string             `mapstructure:"password"`
+	Password string `mapstructure:"password"`
 	// Database name. Default - otel
-	Database string             `mapstructure:"database"`
+	Database string `mapstructure:"database"`
 	// Schema name. Default - otel
-	Schema   string             `mapstructure:"schema"`
+	Schema string `mapstructure:"schema"`
 	// SSL mode. Default - disabled
-	SSLmode  string             `mapstructure:"sslmode"`
+	SSLmode string `mapstructure:"sslmode"`
 }
 
 // Should create schema
