@@ -49,10 +49,10 @@ func (e *metricsExporter) ConsumeMetrics(ctx context.Context, md pmetric.Metrics
 			scopeURL := rMetrics.ScopeMetrics().At(j).SchemaUrl()
 
 			resMetadata := internal.ResourceMetadata{
-				ResURL: resURL,
-				ResAttrs: resAttrs,
+				ResURL:     resURL,
+				ResAttrs:   resAttrs,
 				InstrScope: instrScope,
-				ScopeUrl: scopeURL,
+				ScopeUrl:   scopeURL,
 			}
 
 			for k := 0; k < metrics.Len(); k++ {
@@ -92,16 +92,20 @@ func (e *metricsExporter) Start(ctx context.Context, host component.Host) error 
 
 	internal.SetLogger(e.logger)
 
-	if !e.config.shouldCreateSchema() {
-		return nil
-	}
+	if e.config.SepTables {
+		if !e.config.shouldCreateSchema() {
+			return nil
+		}
 
-	if err := internal.CreateSchema(ctx, e.client, e.config.DatabaseConfig.Schema); err != nil {
-		return err
-	}
+		if err := internal.CreateSchema(ctx, e.client, e.config.DatabaseConfig.Schema); err != nil {
+			return err
+		}
 
-	if err := internal.CreateAttributesMappingTable(ctx, e.client, e.config.DatabaseConfig.Schema); err != nil {
-		return err
+		if err := internal.CreateAttributesMappingTable(ctx, e.client, e.config.DatabaseConfig.Schema); err != nil {
+			return err
+		}
+	} else {
+		return errors.New("Separate Tables is disabled! To be implemented yet")
 	}
 
 	return nil
