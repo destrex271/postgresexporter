@@ -45,6 +45,25 @@ var (
 		"timestamp       TIMESTAMP NOT NULL",
 		"metrics    JSONB",
 	}
+	timescaleDBNoSepMetricTableColumns = []string{
+		"resource_url             VARCHAR",
+		"resource_attributes      JSONB",
+		"scope_name               VARCHAR",
+		"scope_version            VARCHAR",
+		"scope_attributes         JSONB",
+		"scope_dropped_attr_count INTEGER",
+		"scope_url                VARCHAR",
+		"service_name             VARCHAR",
+
+		"name        VARCHAR NOT NULL",
+		"type        INTEGER",
+		"description VARCHAR",
+		"unit        VARCHAR",
+
+		"start_timestamp TIMESTAMPTZ",
+		"timestamp       TIMESTAMPTZ NOT NULL",
+		"metrics    JSONB",
+	}
 	postgreSQLBaseMetricTableColumns = []string{
 		"resource_url             VARCHAR",
 		"resource_attributes      JSONB",
@@ -180,6 +199,18 @@ func getBaseMetricTableColumns(dbtype DBType) []string {
 		tableColumns = timescaleDBBaseMetricTableColumns
 	default:
 		tableColumns = postgreSQLBaseMetricTableColumns
+	}
+
+	return tableColumns
+}
+
+func getNoSepMetricTableColumns(dbtype DBType) []string {
+	var tableColumns []string
+	switch dbtype {
+	case DBTypeTimescaleDB:
+		tableColumns = timescaleDBNoSepMetricTableColumns
+	default:
+		tableColumns = postgreSQLNoSepMetricTableColumns
 	}
 
 	return tableColumns

@@ -14,8 +14,8 @@ type Config struct {
 
 	// Decided to create separate tables for each metric to provide better performance.
 	// But you can define DatabaseConfig.Schema in which to create it.
-	// Metrics table name
-	// MetricsTableName string                       `mapstructure:"metrics_table_name"`
+	// Metrics table name. Used when sep_tables is disabled.
+	MetricsTableName string `mapstructure:"metrics_table_name"`
 
 	// Logs table name
 	LogsTableName string `mapstructure:"logs_table_name"`
