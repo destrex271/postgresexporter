@@ -36,7 +36,14 @@ func newMetricsExporter(config *Config, set exporter.Settings) (*metricsExporter
 func (e *metricsExporter) ConsumeMetrics(ctx context.Context, md pmetric.Metrics) error {
 	e.logger.Debug("Preparing to save metrics into postgres", zap.Int("Metric count", md.MetricCount()))
 
-	metricsGroupMap := internal.NewMetricsGroupMap(e.config.DatabaseConfig.Type, e.config.DatabaseConfig.Schema)
+	var metricsGroupMap map[pmetric.MetricType]internal.MetricsGroup
+	var genericGroup *internal.GenericMetricsGroup
+
+	if e.config.SepTables {
+		metricsGroupMap = internal.NewMetricsGroupMap(e.config.DatabaseConfig.Type, e.config.DatabaseConfig.Schema)
+	} else {
+		genericGroup = internal.NewGenericMetricsGroup(e.config.DatabaseConfig.Type, e.config.DatabaseConfig.Schema, e.config.MetricsTableName)
+	}
 
 	for i := 0; i < md.ResourceMetrics().Len(); i++ {
 		rMetrics := md.ResourceMetrics().At(i)
@@ -49,31 +56,35 @@ func (e *metricsExporter) ConsumeMetrics(ctx context.Context, md pmetric.Metrics
 			scopeURL := rMetrics.ScopeMetrics().At(j).SchemaUrl()
 
 			resMetadata := internal.ResourceMetadata{
-				ResURL: resURL,
-				ResAttrs: resAttrs,
+				ResURL:     resURL,
+				ResAttrs:   resAttrs,
 				InstrScope: instrScope,
-				ScopeUrl: scopeURL,
+				ScopeUrl:   scopeURL,
 			}
 
 			for k := 0; k < metrics.Len(); k++ {
 				m := metrics.At(k)
 
 				var errs error
-				switch m.Type() {
-				case pmetric.MetricTypeGauge:
-					errs = errors.Join(errs, metricsGroupMap[pmetric.MetricTypeGauge].Add(&resMetadata, m.Gauge(), m.Name(), m.Description(), m.Unit(), m.Metadata()))
-				case pmetric.MetricTypeSum:
-					errs = errors.Join(errs, metricsGroupMap[pmetric.MetricTypeSum].Add(&resMetadata, m.Sum(), m.Name(), m.Description(), m.Unit(), m.Metadata()))
-				case pmetric.MetricTypeHistogram:
-					errs = errors.Join(errs, metricsGroupMap[pmetric.MetricTypeHistogram].Add(&resMetadata, m.Histogram(), m.Name(), m.Description(), m.Unit(), m.Metadata()))
-				case pmetric.MetricTypeExponentialHistogram:
-					errs = errors.Join(errs, metricsGroupMap[pmetric.MetricTypeExponentialHistogram].Add(&resMetadata, m.ExponentialHistogram(), m.Name(), m.Description(), m.Unit(), m.Metadata()))
-				case pmetric.MetricTypeSummary:
-					errs = errors.Join(errs, metricsGroupMap[pmetric.MetricTypeSummary].Add(&resMetadata, m.Summary(), m.Name(), m.Description(), m.Unit(), m.Metadata()))
-				case pmetric.MetricTypeEmpty:
-					return fmt.Errorf("metrics type is unset")
-				default:
-					return fmt.Errorf("unsupported metrics type")
+				if e.config.SepTables {
+					switch m.Type() {
+					case pmetric.MetricTypeGauge:
+						errs = errors.Join(errs, metricsGroupMap[pmetric.MetricTypeGauge].Add(&resMetadata, m.Gauge(), m.Name(), m.Description(), m.Unit(), m.Metadata()))
+					case pmetric.MetricTypeSum:
+						errs = errors.Join(errs, metricsGroupMap[pmetric.MetricTypeSum].Add(&resMetadata, m.Sum(), m.Name(), m.Description(), m.Unit(), m.Metadata()))
+					case pmetric.MetricTypeHistogram:
+						errs = errors.Join(errs, metricsGroupMap[pmetric.MetricTypeHistogram].Add(&resMetadata, m.Histogram(), m.Name(), m.Description(), m.Unit(), m.Metadata()))
+					case pmetric.MetricTypeExponentialHistogram:
+						errs = errors.Join(errs, metricsGroupMap[pmetric.MetricTypeExponentialHistogram].Add(&resMetadata, m.ExponentialHistogram(), m.Name(), m.Description(), m.Unit(), m.Metadata()))
+					case pmetric.MetricTypeSummary:
+						errs = errors.Join(errs, metricsGroupMap[pmetric.MetricTypeSummary].Add(&resMetadata, m.Summary(), m.Name(), m.Description(), m.Unit(), m.Metadata()))
+					case pmetric.MetricTypeEmpty:
+						return fmt.Errorf("metrics type is unset")
+					default:
+						return fmt.Errorf("unsupported metrics type")
+					}
+				} else {
+					errs = errors.Join(errs, genericGroup.Add(&resMetadata, m))
 				}
 
 				if errs != nil {
@@ -84,7 +95,11 @@ func (e *metricsExporter) ConsumeMetrics(ctx context.Context, md pmetric.Metrics
 		}
 	}
 
-	return internal.InsertMetrics(ctx, e.client, metricsGroupMap)
+	if e.config.SepTables {
+		return internal.InsertMetrics(ctx, e.client, metricsGroupMap)
+	}
+
+	return genericGroup.Insert(ctx, e.client)
 }
 
 func (e *metricsExporter) Start(ctx context.Context, host component.Host) error {
@@ -100,8 +115,15 @@ func (e *metricsExporter) Start(ctx context.Context, host component.Host) error 
 		return err
 	}
 
-	if err := internal.CreateAttributesMappingTable(ctx, e.client, e.config.DatabaseConfig.Schema); err != nil {
-		return err
+	if e.config.SepTables {
+		if err := internal.CreateAttributesMappingTable(ctx, e.client, e.config.DatabaseConfig.Schema); err != nil {
+			return err
+		}
+	} else {
+		genericGroup := internal.NewGenericMetricsGroup(e.config.DatabaseConfig.Type, e.config.DatabaseConfig.Schema, e.config.MetricsTableName)
+		if err := genericGroup.CreateTable(ctx, e.client); err != nil {
+			return err
+		}
 	}
 
 	return nil
